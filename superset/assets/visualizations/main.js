@@ -40,5 +40,8 @@ const vizMap = {
   deck_screengrid: require('./deckgl/screengrid.jsx'),
   deck_grid: require('./deckgl/grid.jsx'),
   deck_hex: require('./deckgl/hex.jsx'),
+  table_with_sum: require('./table_with_sum.js'),
+  table_zod: require('./table_zod.js'),
+  filter_box_with_pre_filter: require('./filter_box_with_pre_filter.jsx'),
 };
 export default vizMap;
