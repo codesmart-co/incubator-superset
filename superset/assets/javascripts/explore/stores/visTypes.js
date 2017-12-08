@@ -1329,6 +1329,114 @@ export const visTypes = {
       sections.NVD3TimeSeries[1],
     ],
   },
+
+  table_with_sum: {
+    label: t('Table View With Sum'),
+    controlPanelSections: [
+      {
+        label: t('GROUP BY'),
+        description: t('Use this section if you want a query that aggregates'),
+        controlSetRows: [
+          ['groupby'],
+          ['metrics', 'percent_metrics'],
+          ['include_time'],
+          ['timeseries_limit_metric', 'order_desc'],
+        ],
+      },
+      {
+        label: t('NOT GROUPED BY'),
+        description: t('Use this section if you want to query atomic rows'),
+        controlSetRows: [
+          ['all_columns'],
+          ['order_by_cols'],
+        ],
+      },
+      {
+        label: t('Options'),
+        controlSetRows: [
+          ['table_timestamp_format'],
+          ['row_limit', 'page_length'],
+          ['include_search', 'table_filter'],
+        ],
+      },
+    ],
+    controlOverrides: {
+      metrics: {
+        validators: [],
+      },
+      time_grain_sqla: {
+        default: null,
+      },
+    },
+  },
+
+  table_zod: {
+    label: t('Table For Zodiac View'),
+    controlPanelSections: [
+      {
+        label: t('GROUP BY'),
+        description: t('Use this section if you want a query that aggregates'),
+        controlSetRows: [
+          ['groupby'],
+          ['metrics', 'percent_metrics'],
+          ['include_time'],
+          ['timeseries_limit_metric', 'order_desc'],
+        ],
+      },
+      {
+        label: t('NOT GROUPED BY'),
+        description: t('Use this section if you want to query atomic rows'),
+        controlSetRows: [
+          ['all_columns'],
+          ['order_by_cols'],
+        ],
+      },
+      {
+        label: t('Options'),
+        controlSetRows: [
+          ['table_timestamp_format'],
+          ['row_limit', 'page_length'],
+          ['include_search', 'table_filter'],
+        ],
+      },
+    ],
+    controlOverrides: {
+      metrics: {
+        validators: [],
+      },
+      time_grain_sqla: {
+        default: null,
+      },
+    },
+  },
+
+  filter_box_with_pre_filter: {
+    label: t('Filters with pre filter'),
+    controlPanelSections: [
+      {
+        label: t('Query'),
+        expanded: true,
+        controlSetRows: [
+          ['groupby'],
+          ['metric'],
+          ['date_filter', 'instant_filtering'],
+          ['show_sqla_time_granularity', 'show_sqla_time_column'],
+          ['show_druid_time_granularity', 'show_druid_time_origin'],
+        ],
+      },
+    ],
+    controlOverrides: {
+      groupby: {
+        label: t('Filter controls'),
+        description: t(
+          'The controls you want to filter on. Note that only columns ' +
+          'checked as "filterable" will show up on this list.'),
+        mapStateToProps: state => ({
+          options: (state.datasource) ? state.datasource.columns.filter(c => c.filterable) : [],
+        }),
+      },
+    },
+  },
 };
 
 export default visTypes;
