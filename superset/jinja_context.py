@@ -63,10 +63,6 @@ def current_username():
 def last_sync_value(context, column_value='', column_type='String'):
     """last_sync_value"""
 
-    print('last_sync_value column_value = {} column_type = {}'.format(
-        column_value, column_type
-    ))
-
     column_value = context.get('sync_last', column_value)
 
     date_list = [
