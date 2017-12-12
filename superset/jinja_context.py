@@ -13,6 +13,13 @@ import uuid
 from dateutil.relativedelta import relativedelta
 from flask import g, request
 from jinja2.sandbox import SandboxedEnvironment
+from jinja2 import contextfunction
+
+# sqlalchemy
+from sqlalchemy import text
+from sqlalchemy import String
+from sqlalchemy import Integer
+from sqlalchemy import bindparam
 
 from superset import app
 
@@ -52,6 +59,82 @@ def current_username():
         return g.user.username
 
 
+@contextfunction
+def last_sync_value(context, column_value='', column_type='String'):
+    """last_sync_value"""
+
+    print('last_sync_value column_value = {} column_type = {}'.format(
+        column_value, column_type
+    ))
+
+    column_value = context.get('sync_last', column_value)
+
+    date_list = [
+        'date',
+        'dates',
+    ]
+
+    string_list = [
+        'string',
+        'str',
+    ]
+
+    int_list = [
+        'int',
+        'integer',
+    ]
+
+    column_type = column_type.lower()
+
+    if column_type in date_list:
+        # column_value = dateutil_parser.parse(column_value)
+
+        try:
+            column_value = str(column_value)
+        except ValueError:
+            column_value = ''
+
+        s = text(':value').bindparams(
+            bindparam(
+                key='value',
+                value=column_value,
+                # type_=DateTime
+                type_=String
+            )
+        ).compile(compile_kwargs={"literal_binds": True})
+
+        return s
+    elif column_type in string_list:
+        try:
+            column_value = str(column_value)
+        except ValueError:
+            column_value = ''
+
+        s = text(':value').bindparams(
+            bindparam(
+                key='value',
+                value=column_value,
+                type_=String
+            )
+        ).compile(compile_kwargs={"literal_binds": True})
+        return s
+
+    elif column_type in int_list:
+        try:
+            column_value = int(column_value)
+        except ValueError:
+            column_value = 0
+
+        s = text(':value').bindparams(
+            bindparam(
+                key='value',
+                value=column_value,
+                type_=Integer
+            )
+        ).compile(compile_kwargs={"literal_binds": True})
+        return s
+
+
 class BaseTemplateProcessor(object):
 
     """Base class for database-specific jinja context
@@ -82,8 +165,10 @@ class BaseTemplateProcessor(object):
             'current_user_id': current_user_id,
             'current_username': current_username,
             'form_data': {},
+            'last_sync_value': last_sync_value,
         }
         self.context.update(kwargs)
+
         self.context.update(BASE_CONTEXT)
         if self.engine:
             self.context[self.engine] = self
@@ -97,7 +182,9 @@ class BaseTemplateProcessor(object):
         "SELECT '2017-01-01T00:00:00'"
         """
         template = self.env.from_string(sql)
+
         kwargs.update(self.context)
+
         return template.render(kwargs)
 
 
