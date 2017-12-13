@@ -1960,7 +1960,6 @@ class Superset(BaseSupersetView):
         mydb = db.session.query(models.Database).filter_by(id=database_id).one()
         cols = []
         indexes = []
-        t = mydb.get_columns(table_name, schema)
         try:
             t = mydb.get_columns(table_name, schema)
             indexes = mydb.get_indexes(table_name, schema)
