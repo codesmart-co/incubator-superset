@@ -4,6 +4,7 @@ import { Alert, Button, ButtonGroup, ProgressBar } from 'react-bootstrap';
 import shortid from 'shortid';
 
 import VisualizeModal from './VisualizeModal';
+import ETLModal from './ETLModal';
 import HighlightedSql from './HighlightedSql';
 import FilterableTable from '../../components/FilterableTable/FilterableTable';
 import QueryStateLabel from './QueryStateLabel';
@@ -12,6 +13,7 @@ import { t } from '../../locales';
 const propTypes = {
   actions: PropTypes.object,
   csv: PropTypes.bool,
+  etl: PropTypes.bool,
   query: PropTypes.object,
   search: PropTypes.bool,
   showSql: PropTypes.bool,
@@ -24,6 +26,7 @@ const defaultProps = {
   visualize: true,
   showSql: false,
   csv: true,
+  etl: true,
   actions: {},
   cache: false,
 };
@@ -36,6 +39,7 @@ export default class ResultSet extends React.PureComponent {
     this.state = {
       searchText: '',
       showModal: false,
+      showETLModal: false,
       data: null,
     };
   }
@@ -59,7 +63,18 @@ export default class ResultSet extends React.PureComponent {
     }
   }
   getControls() {
-    if (this.props.search || this.props.visualize || this.props.csv) {
+    if (this.props.search || this.props.visualize || this.props.csv || this.props.etl) {
+      let etlButton;
+      if (this.props.etl) {
+        etlButton = (
+          <Button
+            bsSize="small"
+            onClick={this.showETLModal.bind(this)}
+          >
+            <i className="fa fa-refresh" /> {t('ETL')}
+          </Button>
+        );
+      }
       let csvButton;
       if (this.props.csv) {
         csvButton = (
@@ -95,6 +110,7 @@ export default class ResultSet extends React.PureComponent {
           <div className="clearfix">
             <div className="pull-left">
               <ButtonGroup>
+                {etlButton}
                 {visualizeButton}
                 {csvButton}
               </ButtonGroup>
@@ -126,6 +142,12 @@ export default class ResultSet extends React.PureComponent {
   }
   hideModal() {
     this.setState({ showModal: false });
+  }
+  showETLModal() {
+    this.setState({ showETLModal: true });
+  }
+  hideETLModal() {
+    this.setState({ showETLModal: false });
   }
   changeSearch(event) {
     this.setState({ searchText: event.target.value });
@@ -185,6 +207,11 @@ export default class ResultSet extends React.PureComponent {
               show={this.state.showModal}
               query={this.props.query}
               onHide={this.hideModal.bind(this)}
+            />
+            <ETLModal
+              show={this.state.showETLModal}
+              query={this.props.query}
+              onHide={this.hideETLModal.bind(this)}
             />
             {this.getControls.bind(this)()}
             {sql}
