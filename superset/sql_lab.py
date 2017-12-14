@@ -23,8 +23,8 @@ from superset.sql_parse import SupersetQuery
 from superset.utils import get_celery_app, QueryStatus
 
 config = app.config
-celery_app = get_celery_app(config)
-stats_logger = app.config.get('STATS_LOGGER')
+celery_app = get_celery_app(app)
+stats_logger = config.get('STATS_LOGGER')
 SQLLAB_TIMEOUT = config.get('SQLLAB_ASYNC_TIME_LIMIT_SEC', 600)
 
 
@@ -76,7 +76,7 @@ def get_query(query_id, session, retry_count=5):
 def get_session(nullpool):
     if nullpool:
         engine = sqlalchemy.create_engine(
-            app.config.get('SQLALCHEMY_DATABASE_URI'), poolclass=NullPool)
+            config.get('SQLALCHEMY_DATABASE_URI'), poolclass=NullPool)
         session_class = sessionmaker()
         session_class.configure(bind=engine)
         return session_class()

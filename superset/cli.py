@@ -15,7 +15,7 @@ from flask_script import Manager
 from superset import app, db, security, utils
 
 config = app.config
-celery_app = utils.get_celery_app(config)
+celery_app = utils.get_celery_app(app)
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)

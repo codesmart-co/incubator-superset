@@ -21,7 +21,7 @@ import sys
 import uuid
 import zlib
 
-import celery
+from celery import Celery
 from dateutil.parser import parse
 from flask import flash, Markup, redirect, render_template, request, url_for
 from flask_appbuilder._compat import as_unicode
@@ -657,11 +657,26 @@ def zlib_decompress_to_string(blob):
 _celery_app = None
 
 
-def get_celery_app(config):
+def get_celery_app(app):
     global _celery_app
+
     if _celery_app:
         return _celery_app
-    _celery_app = celery.Celery(config_source=config.get('CELERY_CONFIG'))
+
+    _celery_app = Celery(
+        app.import_name, config_source=app.config.get('CELERY_CONFIG'))
+
+    TaskBase = _celery_app.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    _celery_app.Task = ContextTask
+
     return _celery_app
 
 
