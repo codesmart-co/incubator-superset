@@ -34,10 +34,8 @@ class SqlLabException(Exception):
 
 def dedup(l, suffix='__'):
     """De-duplicates a list of string by suffixing a counter
-
     Always returns the same number of entries as provided, and always returns
     unique values.
-
     >>> print(','.join(dedup(['foo', 'bar', 'bar', 'bar'])))
     foo,bar,bar__1,bar__2
     """

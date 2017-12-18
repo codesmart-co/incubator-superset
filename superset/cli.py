@@ -13,7 +13,10 @@ from flask_migrate import MigrateCommand
 from flask_script import Manager
 
 from superset import app, db, security, utils
+# from superset import create_app
 
+
+# app, db, migrate = create_app()
 config = app.config
 celery_app = utils.get_celery_app(app)
 

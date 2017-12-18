@@ -93,7 +93,6 @@ def flasher(msg, severity=None):
 
 class memoized(object):  # noqa
     """Decorator that caches a function's return value each time it is called
-
     If called later with the same arguments, the cached value is returned, and
     not re-evaluated.
     """
@@ -129,9 +128,7 @@ def js_string_to_python(item):
 
 def string_to_num(s):
     """Converts a string to an int/float
-
     Returns ``None`` if it can't be converted
-
     >>> string_to_num('5')
     5
     >>> string_to_num('5.2')
@@ -169,7 +166,6 @@ class DimSelector(Having):
 
 def list_minus(l, minus):
     """Returns l without what is in minus
-
     >>> list_minus([1, 2, 3], [2])
     [1, 3]
     """
@@ -179,7 +175,6 @@ def list_minus(l, minus):
 def parse_human_datetime(s):
     """
     Returns ``datetime.datetime`` from human readable strings
-
     >>> from datetime import date, timedelta
     >>> from dateutil.relativedelta import relativedelta
     >>> parse_human_datetime('2015-04-03')
@@ -223,7 +218,6 @@ def dttm_from_timtuple(d):
 def parse_human_timedelta(s):
     """
     Returns ``datetime.datetime`` from natural language time deltas
-
     >>> parse_human_datetime('now') <= datetime.now()
     True
     """
@@ -282,7 +276,6 @@ def base_json_conv(obj):
 def json_iso_dttm_ser(obj):
     """
     json serializer that deals with dates
-
     >>> dttm = datetime(1970, 1, 1)
     >>> json.dumps({'dttm': dttm}, default=json_iso_dttm_ser)
     '{"dttm": "1970-01-01T00:00:00"}'
@@ -334,11 +327,9 @@ def json_dumps_w_dates(payload):
 
 def error_msg_from_exception(e):
     """Translate exception into error message
-
     Database have different ways to handle exception. This function attempts
     to make sense of the exception object and construct a human readable
     sentence.
-
     TODO(bkyryliuk): parse the Presto error message from the connection
                      created via create_engine.
     engine = create_engine('presto://localhost:3506/silver') -
@@ -581,9 +572,7 @@ def has_access(f):
         Use this decorator to enable granular security permissions to your
         methods. Permissions will be associated to a role, and roles are
         associated to users.
-
         By default the permission's name is the methods name.
-
         Forked from the flask_appbuilder.security.decorators
         TODO(bkyryliuk): contribute it back to FAB
     """
