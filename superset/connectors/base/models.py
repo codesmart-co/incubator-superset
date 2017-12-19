@@ -211,6 +211,7 @@ class BaseColumn(AuditMixinNullable, ImportMixin):
     max = Column(Boolean, default=False)
     min = Column(Boolean, default=False)
     filterable = Column(Boolean, default=False)
+    is_index = Column(Boolean, default=False)  # add by bit
     description = Column(Text)
     is_dttm = None
 

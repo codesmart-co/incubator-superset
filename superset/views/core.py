@@ -39,6 +39,7 @@ import superset.models.core as models
 from superset.models.sql_lab import Query
 from superset.sql_parse import SupersetQuery
 from superset.utils import has_access, merge_extra_filters, QueryStatus
+
 from .base import (
     api, BaseSupersetView, CsvResponse, DeleteMixin, get_error_msg,
     get_user_roles, json_error_response, SupersetFilter, SupersetModelView,
@@ -1950,6 +1951,105 @@ class Superset(BaseSupersetView):
         db.session.commit()
         return self.json_response(json.dumps({
             'table_id': table.id,
+        }))
+
+    # TODO MOVE TO ETL PACKAGE sql connector
+
+    @has_access
+    @expose('/sqllab_etl/', methods=['POST'])
+    @log_this
+    def sqllab_etl(self):
+
+        from bit.models import EtlTable
+
+        SqlaTable = ConnectorRegistry.sources['table']
+        data = json.loads(request.form.get('data'))
+        etl_table_name = data.get('etlName')
+        etl_chunk_size = data.get('chunkSize', 1)
+
+        if etl_table_name == '':
+            raise Exception('Enter a table name')
+
+        table_name = 'for_etl_{}'.format(
+            data.get('etlName')
+        )
+        table = (
+            db.session.query(SqlaTable)
+                .filter_by(table_name=table_name)
+                .first()
+        )
+        if not table:
+            table = SqlaTable(table_name=table_name)
+        table.database_id = data.get('dbId')
+        q = SupersetQuery(data.get('sql'))
+        table.sql = q.stripped()
+        db.session.add(table)
+        cols = []
+        dims = []
+        metrics = []
+        for column_name, config in data.get('columns').items():
+            SqlaTable = ConnectorRegistry.sources['table']
+            TableColumn = SqlaTable.column_class
+            SqlMetric = SqlaTable.metric_class
+
+            verbose_name = config.get('verbose_name', column_name)
+            column_type = config.get('type', False)
+            is_dim = config.get('is_dim', False)
+            is_dttm = config.get('is_date', False)
+            is_index = config.get('is_index', False)
+
+            col = TableColumn(
+                column_name=column_name,
+                filterable=is_index,
+                groupby=is_index,
+                verbose_name=verbose_name,
+                is_dttm=is_dttm,
+                type=column_type,
+                is_index=is_index,
+            )
+            cols.append(col)
+            if is_dim:
+                dims.append(col)
+            agg = config.get('agg')
+            if agg:
+                if agg == 'count_distinct':
+                    metrics.append(SqlMetric(
+                        metric_name='{agg}__{column_name}'.format(**locals()),
+                        expression='COUNT(DISTINCT {column_name})'
+                            .format(**locals()),
+                    ))
+                else:
+                    metrics.append(SqlMetric(
+                        metric_name='{agg}__{column_name}'.format(**locals()),
+                        expression='{agg}({column_name})'.format(**locals()),
+                    ))
+        if not metrics:
+            metrics.append(SqlMetric(
+                metric_name='count'.format(**locals()),
+                expression='count(*)'.format(**locals()),
+            ))
+        table.columns = cols
+        table.metrics = metrics
+        db.session.commit()
+
+        etl_table = (
+            db.session.query(EtlTable)
+                .filter_by(name=etl_table_name)
+                .first()
+        )
+        if not etl_table:
+            etl_table = EtlTable(name=etl_table_name)
+
+        etl_table.table = table
+        etl_table.create_table()
+        etl_table.chunk_size = etl_chunk_size
+        etl_table.sync_next_time = etl_table.get_next_sync()
+
+        db.session.commit()
+
+        return self.json_response(json.dumps({
+            'table_id': table.id,
+            'etl_table_id': etl_table.id,
         }))
 
     @has_access
