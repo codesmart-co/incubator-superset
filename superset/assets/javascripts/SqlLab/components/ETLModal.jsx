@@ -9,7 +9,7 @@ import { Alert, Button, Col, Modal } from 'react-bootstrap';
 import Select from 'react-select';
 import { Table } from 'reactable';
 import shortid from 'shortid';
-import { getExploreUrl } from '../../explore/exploreUtils';
+// import { getExploreUrl } from '../../explore/exploreUtils';
 import * as actions from '../actions';
 
 import { t } from '../../locales';
@@ -33,8 +33,7 @@ class ETLModal extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      datasourceName: this.datasourceName(),
-      etlName: '',
+      etlName: this.etlName(),
       chunkSize: 1000,
       columns: this.getColumnFromProps(),
       hints: [],
@@ -57,16 +56,16 @@ class ETLModal extends React.PureComponent {
     });
     return columns;
   }
-  datasourceName() {
+  etlName() {
     const { query } = this.props;
     const uniqueId = shortid.generate();
-    let datasourceName = uniqueId;
+    let etlName = uniqueId;
     if (query) {
-      datasourceName = query.user ? `${query.user}-` : '';
-      datasourceName += query.db ? `${query.db}-` : '';
-      datasourceName += `${query.tab}-${uniqueId}`;
+      etlName = query.db ? `${query.db}-` : '';
+      etlName += query.user ? `${query.user}-` : '';
+      etlName += `${uniqueId}`;
     }
-    return datasourceName;
+    return etlName;
   }
   validate() {
     const hints = [];
@@ -84,9 +83,6 @@ class ETLModal extends React.PureComponent {
     });
     this.setState({ hints });
   }
-  changeChartType(option) {
-    this.setState({ chartType: option }, this.validate);
-  }
   mergedColumns() {
     const columns = Object.assign({}, this.state.columns);
     if (this.props.query && this.props.query.results.columns) {
@@ -98,7 +94,7 @@ class ETLModal extends React.PureComponent {
     }
     return columns;
   }
-  buildVizOptions() {
+  buildETLOptions() {
     return {
       etlName: this.state.etlName,
       chunkSize: this.state.chunkSize,
@@ -107,7 +103,7 @@ class ETLModal extends React.PureComponent {
       dbId: this.props.query.dbId,
     };
   }
-  buildVisualizeAdvise() {
+  buildETLAdvise() {
     let advise;
     const timeout = this.props.timeout;
     const queryDuration = moment.duration(this.props.query.endDttm - this.props.query.startDttm);
@@ -124,29 +120,29 @@ class ETLModal extends React.PureComponent {
     }
     return advise;
   }
-  visualize() {
-    console.log(this.buildVizOptions());
-    // this.props.actions.createDatasource(this.buildVizOptions(), this)
-    //   .done((resp) => {
-    //     const columns = Object.keys(this.state.columns).map(k => this.state.columns[k]);
-    //     const data = JSON.parse(resp);
-    //     const mainGroupBy = columns.filter(d => d.is_dim)[0];
-    //     const formData = {
-    //       datasource: `${data.table_id}__table`,
-    //       viz_type: this.state.chartType.value,
-    //       since: '100 years ago',
-    //       limit: '0',
-    //     };
-    //     if (mainGroupBy) {
-    //       formData.groupby = [mainGroupBy.name];
-    //     }
-    //     notify.info(t('Creating a data source and popping a new tab'));
-    //
-    //     window.open(getExploreUrl(formData));
-    //   })
-    //   .fail(() => {
-    //     notify.error(this.props.errorMessage);
-    //   });
+  CreateETL() {
+    console.log(this.buildETLOptions());
+    this.props.actions.createETLDatasource(this.buildETLOptions(), this)
+      .done((resp) => {
+        // const columns = Object.keys(this.state.columns).map(k => this.state.columns[k]);
+        // const data = JSON.parse(resp);
+        // const mainGroupBy = columns.filter(d => d.is_dim)[0];
+        // const formData = {
+        //   datasource: `${data.table_id}__table`,
+        //   // viz_type: this.state.chartType.value,
+        //   //since: '100 years ago',
+        //   limit: '1',
+        // };
+        // if (mainGroupBy) {
+        //   formData.groupby = [mainGroupBy.name];
+        // }
+        notify.info(t('Creating a data source and popping a new tab'));
+
+        //window.open(getExploreUrl(formData));
+      })
+      .fail(() => {
+        notify.error(this.props.errorMessage);
+    });
   }
   changeETLName(event) {
     this.setState({ etlName: event.target.value }, this.validate);
@@ -167,6 +163,13 @@ class ETLModal extends React.PureComponent {
     columns = Object.assign({}, columns, { [columnName]: column });
     this.setState({ columns }, this.validate);
   }
+  changeColumnVerboseNameFunction(columnName, event) {
+    let columns = this.mergedColumns();
+    const val = (event.target.value) ? event.target.value : null;
+    const column = Object.assign({}, columns[columnName], { verbose_name: val });
+    columns = Object.assign({}, columns, { [columnName]: column });
+    this.setState({ columns }, this.validate);
+  }
   render() {
     if (!(this.props.query) || !(this.props.query.results) || !(this.props.query.results.columns)) {
       return (
@@ -184,9 +187,9 @@ class ETLModal extends React.PureComponent {
       verbose_name: (
         <input
           type="text"
-          value={col.name}
-          style={{width: '140px', height: '28px'}}
-          onChange={this.changeCheckbox.bind(this, 'is_dim', col.name)}
+          value={(this.state.columns[col.name].verbose_name) ? this.state.columns[col.name].verbose_name : col.name}
+          style={{ width: '140px', height: '28px' }}
+          onChange={this.changeColumnVerboseNameFunction.bind(this, col.name)}
           className="form-control"
         />
       ),
@@ -194,6 +197,7 @@ class ETLModal extends React.PureComponent {
         <input
           type="checkbox"
           onChange={this.changeCheckbox.bind(this, 'is_index', col.name)}
+          checked={(this.state.columns[col.name].is_index) ? this.state.columns[col.name].is_index : false}
           className="form-control"
         />
       ),
@@ -212,7 +216,7 @@ class ETLModal extends React.PureComponent {
             { value: 'JSON', label: 'JSON' },
           ]}
           onChange={this.changeColumnTypeFunction.bind(this, col.name)}
-          value={(this.state.columns[col.name] && this.state.columns[col.name].type) ? ((this.state.columns[col.name].type != 'OBJECT') ? this.state.columns[col.name].type : 'TEXT' ): 'TEXT'}
+          value={(this.state.columns[col.name] && this.state.columns[col.name].type) ? ((this.state.columns[col.name].type !== 'OBJECT') ? this.state.columns[col.name].type : 'TEXT') : 'TEXT'}
         />
       ),
     }));
@@ -227,10 +231,10 @@ class ETLModal extends React.PureComponent {
           </Modal.Header>
           <Modal.Body>
             {alerts}
-            {this.buildVisualizeAdvise()}
+            {this.buildETLAdvise()}
             <div className="row">
               <Col md={6}>
-                {t('ETL Name')}
+                {t('ETL Name')} <sup>{t('_etl_{name}')}</sup>
                 <input
                   type="text"
                   className="form-control input-sm"
@@ -257,7 +261,7 @@ class ETLModal extends React.PureComponent {
               data={tableData}
             />
             <Button
-              onClick={this.visualize.bind(this)}
+              onClick={this.CreateETL.bind(this)}
               bsStyle="primary"
               disabled={(this.state.hints.length > 0)}
             >

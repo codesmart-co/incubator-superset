@@ -44,6 +44,10 @@ export const CREATE_DATASOURCE_STARTED = 'CREATE_DATASOURCE_STARTED';
 export const CREATE_DATASOURCE_SUCCESS = 'CREATE_DATASOURCE_SUCCESS';
 export const CREATE_DATASOURCE_FAILED = 'CREATE_DATASOURCE_FAILED';
 
+export const CREATE_ETL_DATASOURCE_STARTED = 'CREATE_ETL_DATASOURCE_STARTED';
+export const CREATE_ETL_DATASOURCE_SUCCESS = 'CREATE_ETL_DATASOURCE_SUCCESS';
+export const CREATE_ETL_DATASOURCE_FAILED = 'CREATE_ETL_DATASOURCE_FAILED';
+
 export function resetState() {
   return { type: RESET_STATE };
 }
@@ -426,6 +430,40 @@ export function createDatasource(vizOptions, context) {
       },
       error: () => {
         dispatch(createDatasourceFailed(t('An error occurred while creating the data source')));
+      },
+    });
+  };
+}
+export function createETLDatasourceStarted() {
+  return { type: CREATE_ETL_DATASOURCE_STARTED };
+}
+export function createETLDatasourceSuccess(response) {
+  const data = JSON.parse(response);
+  const datasource = `${data.table_id}__table`;
+  return { type: CREATE_ETL_DATASOURCE_SUCCESS, datasource };
+}
+export function createETLDatasourceFailed(err) {
+  return { type: CREATE_ETL_DATASOURCE_FAILED, err };
+}
+
+export function createETLDatasource(etlOptions, context) {
+  return (dispatch) => {
+    dispatch(createETLDatasourceStarted());
+
+    return $.ajax({
+      type: 'POST',
+      url: '/superset/sqllab_etl/',
+      async: false,
+      data: {
+        data: JSON.stringify(etlOptions),
+      },
+      context,
+      dataType: 'json',
+      success: (resp) => {
+        dispatch(createETLDatasourceSuccess(resp));
+      },
+      error: () => {
+        dispatch(createETLDatasourceFailed(t('An error occurred while creating the data source')));
       },
     });
   };
